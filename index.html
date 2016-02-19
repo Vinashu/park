@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- Declaring the ng-app -->
+<html ng-app="parking">
+
+<head>
+    <title>Parking</title>
+    <!-- Importing the angular.js script -->
+    <script src="angular.js"></script>
+    <script src="angular-animate.js"></script>    
+    <script>
+        // Creating the module called parking
+        var parking = angular.module("parking", ["ngAnimate"]);
+        // Registering the parkingCtrl to the parking module
+        parking.controller("parkingCtrl", function ($scope, $http) {
+            // Binding the car's array to the scope
+            $scope.cars = [
+                {plate: '6MBV006'},
+                {plate: '5BBM299'},
+                {plate: '5AOJ230'}
+            ];
+            // Binding the park function to the scope
+            $scope.park = function (car) {
+                $scope.cars.push(angular.copy(car));
+                delete $scope.car;
+            };
+            var retrieveCars = function () {
+                $http.get("getCars.php")
+                    .success(function(data, status, headers, config) {
+                        if( Object.keys(data).length > 1){
+                            for(var i=0; i < Object.keys(data).length; i++){
+                                $scope.cars.push(angular.copy(data[i]));
+                            }                               
+                        } else {
+                            $scope.cars.push(angular.copy(data));                            
+                        }             
+                        console.log(data, status);                        
+                    })
+                    .error(function(data, status, headers, config) {
+                        switch(status) {
+                            case 401: {
+                                $scope.message = "You must be authenticated!"
+                            break;
+                            }
+                            case 500: {
+                                $scope.message = "Something went wrong!";
+                            break;
+                            }
+                        }
+                    console.log(data, status);
+                    });
+                };
+            retrieveCars();            
+        });
+    </script>
+    <style>
+        .ng-enter {
+            -webkit-transition: all 1s linear;
+            -moz-transition: all 1s linear;
+            -ms-transition: all 1s linear;
+            -o-transition: all 1s linear;
+            transition: all 1s linear;
+            opacity: 0;
+        }
+        .ng-enter-active {
+            opacity: 1;
+        }        
+    </style>
+</head>
+<!-- Attaching the view to the parkingCtrl -->
+
+<body ng-controller="parkingCtrl">
+    <h3>[Packt] Parking</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Plate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Iterating over the cars -->
+            <tr ng-repeat="car in cars | filter:searchText | orderBy:'plate' | limitTo:10">
+                <!-- Showing the car's plate -->
+                <td>
+                    {{car.plate}}
+                    <span ng-if="car.color">- {{car.color}}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- Binding the car object, with plate, to the scope -->
+    <input type="text" ng-model="car.plate" />
+    <!-- Binding the park function to the click event -->
+    <button ng-click="park(car)">Park</button>
+    <label>Search: <input ng-model="searchText"></label>    
+</body>
+
+</html>
